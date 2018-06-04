@@ -1,6 +1,4 @@
 from pyglet.gl import *
-from pyglet import graphics as gr
-from shapely.geometry import asPolygon
 
 from geom import Point, Line
 
@@ -57,7 +55,8 @@ class Boundary:
         self.changed = True
         # очищаем старый цвет, если есть
         if self._mouse_press_index is not None:
-            self.control_points[self._mouse_press_index].color = Point.default_color
+            self.control_points[self._mouse_press_index].color = \
+                Point.default_color
         # ставим новый цвет
         self._mouse_press_index = v
         if v is not None:
@@ -192,8 +191,8 @@ class Boundary:
         :param point: точка, к которой перейдёт активность
         """
         # просто переключаем точку если
-        # - хотя бы одна точка не является крайней для своей незамкнутой линии при том,
-        #   что линии разные (2 случая)
+        # - хотя бы одна точка не является крайней для своей незамкнутой линии
+        #   при том, что линии разные (2 случая)
         predicate = ai is not None and ai != pi and \
                     not self.lines[ai].closed and \
                     not self.lines[ai].is_bound_point(active)
@@ -204,7 +203,8 @@ class Boundary:
             return
         # новая линия если
         # - точки не имеют линий
-        # - обе точки лежат на замкнутых линиях (могут на одной, а могут на разных
+        # - обе точки лежат на замкнутых линиях (могут на одной,
+        #   а могут на разных
         predicate = ai is None and pi is None
         predicate |= ai is not None and pi is not None and \
                      self.lines[ai].closed and self.lines[pi].closed
@@ -212,7 +212,7 @@ class Boundary:
             self.lines.append(Line(active, point))
             return
         # новая линия с частичным замыканием если
-        # - одна точка лежит на замкнутой линии, а другая не имеет линии (2 случая)
+        # - одна точка лежит на замкнутой линии, другая не имеет линии (2 случая)
         predicate = ai is None and pi is not None and self.lines[pi].closed
         predicate |= pi is None and ai is not None and self.lines[ai].closed
         if predicate:
@@ -222,9 +222,12 @@ class Boundary:
             else:
                 self.lines[-1].closed_with[1] = self.lines[pi]
         # продолжение линии если
-        # - одна из точек является крайней для своей линии, а вторая не имеет линии (2 случая)
-        predicate = pi is None and ai is not None and self.lines[ai].is_bound_point(active)
-        predicate |= ai is None and pi is not None and self.lines[pi].is_bound_point(point)
+        # - одна из точек является крайней для своей линии,
+        #   а вторая не имеет линии (2 случая)
+        predicate = pi is None and ai is not None and \
+                    self.lines[ai].is_bound_point(active)
+        predicate |= ai is None and pi is not None and \
+                     self.lines[pi].is_bound_point(point)
         if predicate:
             if pi is None:
                 self.lines[ai].add(point, active)
@@ -232,11 +235,14 @@ class Boundary:
                 self.lines[pi].add(active, point)
             return
         # продолжение линии с частичным замыканием если
-        # - одна из точек является крайней для своей линии, а вторая лежит на замкнутой (2 случая)
+        # - одна из точек является крайней для своей линии,
+        #   а вторая лежит на замкнутой (2 случая)
         predicate = pi is not None and ai is not None and \
-                    self.lines[pi].closed and self.lines[ai].is_bound_point(active)
+                    self.lines[pi].closed and \
+                    self.lines[ai].is_bound_point(active)
         predicate |= ai is not None and pi is not None and \
-                     self.lines[ai].closed and self.lines[pi].is_bound_point(point)
+                     self.lines[ai].closed and \
+                     self.lines[pi].is_bound_point(point)
         if predicate:
             if self.lines[pi].closed:
                 self.lines[ai].add(point, active, self.lines[pi])
@@ -261,8 +267,10 @@ class Boundary:
             return
         # замыкание линии и создание линии от остатка если
         # - обе точки на одной линии и только одна из них крайняя (2 случая)
-        predicate = ai is not None and ai == pi and self.lines[ai].is_bound_point(active)
-        predicate |= pi is not None and pi == ai and self.lines[pi].is_bound_point(point)
+        predicate = ai is not None and ai == pi and \
+                    self.lines[ai].is_bound_point(active)
+        predicate |= pi is not None and pi == ai and \
+                     self.lines[pi].is_bound_point(point)
         if predicate:
             line = self.lines[ai].close(active, point)
             self.lines.append(line)

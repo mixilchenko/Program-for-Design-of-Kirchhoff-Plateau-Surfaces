@@ -1,16 +1,8 @@
-import ctypes
 import numpy as np
-from sklearn.preprocessing import normalize
-import pyglet
 import glooey
-import autoprop
-from math import cos, sin, pi
-from vecrec import Rect
 from pyglet.gl import *
 import pyglet.graphics as gr
 from pyquaternion import Quaternion
-
-from geom import Point
 
 
 class Container(glooey.Frame):
@@ -30,22 +22,36 @@ class Container(glooey.Frame):
         self.coef = coef
 
     # viewport bounds
-    left_v = property(lambda self: self.margin)
-    bottom_v = property(lambda self: self.margin)
-    width_v = property(lambda self: self.window_size[0] * self.coef // 2 - int(1.5 * self.margin))
-    height_v = property(lambda self: self.window_size[1] * self.coef - 2 * self.margin)
-    right_v = property(lambda self: self.left_v + self.width_v)
-    up_v = property(lambda self: self.bottom_v + self.height_v)
+    left_v = property(lambda self:
+                      self.margin)
+    bottom_v = property(lambda self:
+                        self.margin)
+    width_v = property(lambda self:
+                       self.window_size[0] * self.coef // 2 -
+                       int(1.5 * self.margin))
+    height_v = property(lambda self:
+                        self.window_size[1] * self.coef - 2 * self.margin)
+    right_v = property(lambda self:
+                       self.left_v + self.width_v)
+    up_v = property(lambda self:
+                    self.bottom_v + self.height_v)
     # window bounds
-    left_w = property(lambda self: self.margin)
-    bottom_w = property(lambda self: self.margin)
-    width_w = property(lambda self: self.window_size[0] // 2 - int(1.5 * self.margin))
-    height_w = property(lambda self: self.window_size[1] - 2 * self.margin)
-    right_w = property(lambda self: self.left_w + self.width_w)
-    up_w = property(lambda self: self.bottom_w + self.height_w)
+    left_w = property(lambda self:
+                      self.margin)
+    bottom_w = property(lambda self:
+                        self.margin)
+    width_w = property(lambda self:
+                       self.window_size[0] // 2 - int(1.5 * self.margin))
+    height_w = property(lambda self:
+                        self.window_size[1] - 2 * self.margin)
+    right_w = property(lambda self:
+                       self.left_w + self.width_w)
+    up_w = property(lambda self:
+                    self.bottom_w + self.height_w)
 
     def isin(self, x, y):
-        return (self.left_w <= x <= self.right_w) and (self.bottom_w <= y <= self.up_w)
+        return (self.left_w <= x <= self.right_w) and \
+               (self.bottom_w <= y <= self.up_w)
 
     def recount_xy(self, x, y):
         x = x - self.left_w
@@ -56,7 +62,7 @@ class Container(glooey.Frame):
         glViewport(self.left_v, self.bottom_v, self.width_v, self.height_v)
         gr.draw(4, GL_POLYGON,
                 ('v3f', (-1, -1, .99, -1, 1, .99, 1, 1, .99, 1, -1, .99)),
-                ('c4f', (0., 0., 0.2, 1) * 4))
+                ('c4f', (0., 0., 0.4, 1) * 4))
 
 
 class Container2D(Container):
@@ -88,25 +94,23 @@ class Container2D(Container):
             self.recount_saved(boundary)
 
         # draw points
-        gr.draw(len(self.ps) // 2, GL_POINTS,
+        gr.draw(len(self.ps) // 2,
+                GL_POINTS,
                 ('v2f', self.ps),
                 ('c4f', self.pcs))
 
         # draw lines
         for i in range(len(self.ls)):
-            gr.draw(len(self.ls[i]) // 2, GL_LINE_LOOP if self.closed[i] else GL_LINE_STRIP,
+            gr.draw(len(self.ls[i]) // 2,
+                    GL_LINE_LOOP if self.closed[i] else GL_LINE_STRIP,
                     ('v2f', self.ls[i]),
                     ('c4f', self.lcs[i]))
 
         # draw polygons
         for i in range(len(self.pols)):
-            gr.draw(len(self.pols[i]) // 2, GL_POLYGON,
+            gr.draw(len(self.pols[i]) // 2,
+                    GL_POLYGON,
                     ('v2f', self.pols[i]))
-
-        # print('2D')
-        # a = (ctypes.c_int   *  4)(); glGetIntegerv(GL_VIEWPORT, a); print(np.asarray(a))
-        # a = (ctypes.c_float * 16)(); glGetFloatv(GL_PROJECTION_MATRIX, a); print(np.asarray(a).reshape((4, 4)).T)
-        # a = (ctypes.c_float * 16)(); glGetFloatv(GL_MODELVIEW_MATRIX, a); print(np.asarray(a).reshape((4, 4)).T)
 
     def recount_saved(self, boundary):
         # points
@@ -139,9 +143,12 @@ class Container3D(Container):
         self.center = np.array([[self.width_w/2, self.height_w/2, 0.]])
 
     # viewport bounds
-    left_v = property(lambda self: int(0.5 * self.margin) + self.window_size[0] * self.coef // 2)
+    left_v = property(lambda self:
+                      int(0.5 * self.margin) + self.window_size[0] *
+                                               self.coef // 2)
     # window bounds
-    left_w = property(lambda self: int(0.5 * self.margin) + self.window_size[0] // 2)
+    left_w = property(lambda self:
+                      int(0.5 * self.margin) + self.window_size[0] // 2)
 
     def move_eye(self, dx, dy):
         if dx == dy == 0:
@@ -168,7 +175,9 @@ class Container3D(Container):
         # делаем координаты однородными и транспонируем матрицу
         points = np.append(points, [[1]] * len(points), axis=1).T
         # --- PROJECTION ---
-        l, r, b, t, n, f = -self.width_w/2, self.height_w/2, -self.width_w/2, self.height_w/2, -self.height_w, self.height_w
+        l, r= -self.width_w/2, self.height_w/2
+        b, t =-self.width_w/2, self.height_w/2
+        n, f =-self.height_w, self.height_w
         P = np.array([[2./(r-l), 0, 0, (r+l)/(l-r)],
                       [0, 2./(t-b), 0, (t+b)/(b-t)],
                       [0, 0, 2./(n-f), (f+n)/(n-f)],
@@ -185,13 +194,15 @@ class Container3D(Container):
             self.recount_saved(boundary)
 
         # draw points
-        gr.draw(len(self.ps) // 3, GL_POINTS,
+        gr.draw(len(self.ps) // 3,
+                GL_POINTS,
                 ('v3f', self.ps),
                 ('c4f', self.pcs))
 
         # draw lines
         for i in range(len(self.ls)):
-            gr.draw(len(self.ls[i]) // 3, GL_LINE_LOOP,
+            gr.draw(len(self.ls[i]) // 3,
+                    GL_LINE_LOOP,
                     ('v3f', self.ls[i]),
                     ('c4f', self.lcs[i]))
 
@@ -204,7 +215,8 @@ class Container3D(Container):
 
         # draw polygons
         for i in range(len(self.pols)):
-            gr.draw(len(self.pols[i]) // 3, GL_POLYGON,
+            gr.draw(len(self.pols[i]) // 3,
+                    GL_POLYGON,
                     ('v3f', self.pols[i]))
         glDisable(GL_LIGHT0)
         glDisable(GL_LIGHTING)
@@ -234,10 +246,10 @@ class Container3D(Container):
 
     def recount_center(self, points):
         if len(points) == 0:
-            self.center = np.array([[self.width_w/2, self.height_w/2, 0.]])
+            self.center = [[self.width_w/2, self.height_w/2, 0.]]
         else:
             # центр в центр масс точек
-            self.center = np.array([np.array([p.data for p in points]).mean(axis=0)])
+            self.center = [np.array([p.data for p in points]).mean(axis=0)]
 
     def clear(self):
         self.q = Quaternion()

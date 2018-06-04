@@ -15,8 +15,9 @@ class App(pyglet.window.Window):
     """
 
     def __init__(self, *args, **kwargs):
-        super(App, self).__init__(caption='Kirchhoff-Plateau surfaces',
-                                  resizable=True, width=950, height=480, *args, **kwargs)
+        super(App, self).__init__(caption='Kirchhoff-Plateau Surfaces',
+                                  resizable=True, width=950, height=480,
+                                  *args, **kwargs)
 
         self.set_minimum_size(950, 480)
         # инициализируются в on_resize
@@ -36,13 +37,15 @@ class App(pyglet.window.Window):
         coef = self.get_viewport_size()[0] // width
         # 2D
         if self.container2D is None:
-            self.container2D = Container2D((width, height), coef, (1, 0, 0, 1))
+            self.container2D = Container2D((width, height), coef,
+                                           (1, 0, 0, 1))
         else:
             self.container2D.set_window_size((width, height))
             self.container2D.set_coef(coef)
         # 3D
         if self.container3D is None:
-            self.container3D = Container3D((width, height), coef, (0, 1, 0, 1))
+            self.container3D = Container3D((width, height), coef,
+                                           (0, 1, 0, 1))
         else:
             self.container3D.set_window_size((width, height))
             self.container3D.set_coef(coef)
@@ -92,7 +95,8 @@ class App(pyglet.window.Window):
         if buttons & mouse.LEFT:
             if self.container2D.isin(x, y):
                 x, y = self.container2D.recount_xy(x, y)
-                self.boundary.mouse_press(Point(x, y, randint(0, self.container2D.height_w)))
+                z = randint(0, self.container2D.height_w)
+                self.boundary.mouse_press(Point(x, y, z))
 
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         if buttons & mouse.LEFT:
@@ -112,7 +116,3 @@ class App(pyglet.window.Window):
         self.container2D.draw(self.boundary)
         self.container3D.draw(self.boundary)
         self.boundary.changed = False
-
-
-app = App()
-pyglet.app.run()

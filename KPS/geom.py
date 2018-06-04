@@ -45,7 +45,8 @@ class Point:
         self.p[2] = v
 
     def is_near(self, p):
-        return self.geom.buffer(self.radius).intersects(p.geom.buffer(self.radius))
+        return self.geom.buffer(self.radius).intersects(
+                p.geom.buffer(self.radius))
 
     @classmethod
     def set_radius(cls, value=10):
@@ -139,7 +140,8 @@ class Line:
         new_line = None
         # если линия замкнута сама по себе
         if self.closed and self.closed_with == [None, None]:
-            self.control_points = self.control_points[(i+1) % self.length:0] + self.control_points[:i]
+            self.control_points = self.control_points[(i+1) % self.length:0] + \
+                                  self.control_points[:i]
             self.closed = False
             self.recount_points()
             return None
@@ -173,7 +175,8 @@ class Line:
         return new_line
 
     def connect_line(self, line, this, that):
-        # развернём линии так, чтобы дл своих линий this было последней точкой, а that первой
+        # развернём линии так, чтобы дл своих линий this было последней точкой,
+        # а that первой
         if self.control_points[0] == this:
             self.control_points = self.control_points[::-1]
         if line.control_points[-1] == that:
@@ -221,12 +224,13 @@ class Line:
             # для каждой точки pi
             for i in range(self.length):
                 # строим точки [pi, pi+1) и последовательно добавляем их в points
-                self.points.extend([catmul_rom4(s,
-                                                self.control_points[i - 1],
-                                                self.control_points[i],
-                                                self.control_points[(i + 1) % self.length],
-                                                self.control_points[(i + 2) % self.length])
-                                    for s in np.arange(0, 1, step)])
+                self.points.extend(
+                        [catmul_rom4(s,
+                                     self.control_points[i - 1],
+                                     self.control_points[i],
+                                     self.control_points[(i + 1) % self.length],
+                                     self.control_points[(i + 2) % self.length])
+                         for s in np.arange(0, 1, step)])
         # если линия из одного ребра, ничего достраивать не нужно
         elif self.length == 2:
             self.points = self.control_points[:]
@@ -270,7 +274,8 @@ class Line:
 
 
 class MeshPoint(Point):
-    def __init__(self, x, y, z, index, up=None, right=None, left=None, down=None, is_boundary=False):
+    def __init__(self, x, y, z, index, up=None, right=None, left=None, down=None,
+                 is_boundary=False):
         super(MeshPoint, self).__init__(x, y, z)
         self.up = up
         self.right = right
@@ -396,7 +401,8 @@ class Mesh:
         if point.up is None:
             if not self.geom.contains(asPoint([x, y + self.dy])):
                 # перессекаем boundary для получения точки
-                xyz = np.array(self.geom.boundary.intersection(asLineString([[x, y], [x, self.max_y]])))
+                xyz = np.array(self.geom.boundary.intersection(
+                        asLineString([[x, y], [x, self.max_y]])))
                 # если xyz содержит несколько точек, берём ближнюю
                 if xyz.shape != (3,):
                     xyz = sorted(xyz, key=lambda v: v[1])[0]
@@ -410,7 +416,8 @@ class Mesh:
         if point.right is None:
             if not self.geom.contains(asPoint([x + self.dx, y])):
                 # перессекаем boundary для получения точки
-                xyz = np.array(self.geom.boundary.intersection(asLineString([[x, y], [self.max_x, y]])))
+                xyz = np.array(self.geom.boundary.intersection(
+                        asLineString([[x, y], [self.max_x, y]])))
                 # если xyz содержит несколько точек, берём ближнюю
                 if xyz.shape != (3,):
                     xyz = sorted(xyz, key=lambda v: v[0])[0]
@@ -424,7 +431,8 @@ class Mesh:
         if point.down is None:
             if not self.geom.contains(asPoint([x, y - self.dy])):
                 # перессекаем boundary для получения точки
-                xyz = np.array(self.geom.boundary.intersection(asLineString([[x, self.min_y], [x, y]])))
+                xyz = np.array(self.geom.boundary.intersection(
+                        asLineString([[x, self.min_y], [x, y]])))
                 # если xyz содержит несколько точек, берём ближнюю
                 if xyz.shape != (3,):
                     xyz = sorted(xyz, key=lambda v: v[1], reversed=True)[0]
@@ -438,7 +446,8 @@ class Mesh:
         if point.left is None:
             if not self.geom.contains(asPoint([x - self.dx, y])):
                 # перессекаем boundary для получения точки
-                xyz = np.array(self.geom.boundary.intersection(asLineString([[self.min_x, y], [x, y]])))
+                xyz = np.array(self.geom.boundary.intersection(
+                        asLineString([[self.min_x, y], [x, y]])))
                 # если xyz содержит несколько точек, берём ближнюю
                 if xyz.shape != (3,):
                     xyz = sorted(xyz, key=lambda v: v[0], reversed=True)[0]
