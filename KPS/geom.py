@@ -140,8 +140,11 @@ class Line:
         new_line = None
         # если линия замкнута сама по себе
         if self.closed and self.closed_with == [None, None]:
-            self.control_points = self.control_points[(i+1) % self.length:0] + \
-                                  self.control_points[:i]
+            if i == 0 or i == self.length - 1:
+                self.control_points.pop(i)
+            else:
+                self.control_points = self.control_points[i+1:] + \
+                                      self.control_points[:i]
             self.closed = False
             self.recount_points()
             return None
@@ -285,13 +288,20 @@ class MeshPoint(Point):
         self.index = index
 
     def update(self):
+        """
+        Функция для обновления координаты z расчётом взвешенного среднего
+        """
         if self.is_boundary:
             return
+        # числитель
         zs = 0
+        # знаменатель
         ds = 0
         for p in (self.up, self.right, self.left, self.down):
+            # Эвклидово расстояние между точками
             d = self.distance_with(p)
             # чем ближе, тем больше вес
+            # поэтому обратнопропорционально расстоянию
             zs += p.z / d
             ds += 1 / d
         self.z = zs / ds
@@ -338,16 +348,20 @@ class MeshPoint(Point):
 
     def triangles(self):
         res = []
+        # верхний левый треугольник
         if self.up is not None and self.left is not None:
             res.append([self.index, self.up.index, self.left.index])
+        # нижний правый треугольник
         if self.down is not None and self.right is not None:
             res.append([self.index, self.down.index, self.right.index])
-        # если точка в нижнем левом углу
+        # если точка в нижнем левом углу,
+        # добавляем нижний левый треугольник
         predicate = self.down is not None and not self.down.has_triangles()
         predicate &= self.left is not None and not self.left.has_triangles()
         if predicate:
             res.append([self.index, self.down.index, self.left.index])
-        # если точка в верхнем правом углу
+        # если точка в верхнем правом углу,
+        # добавляем верхний правый треугольник
         predicate = self.up is not None and not self.up.has_triangles()
         predicate &= self.right is not None and not self.right.has_triangles()
         if predicate:
@@ -399,8 +413,9 @@ class Mesh:
             point = f[0]
         # точка сверху
         if point.up is None:
+            # если соседняя точка лежит вне области
             if not self.geom.contains(asPoint([x, y + self.dy])):
-                # перессекаем boundary для получения точки
+                # перессекаем boundary с вертикальной прямой
                 xyz = np.array(self.geom.boundary.intersection(
                         asLineString([[x, y], [x, self.max_y]])))
                 # если xyz содержит несколько точек, берём ближнюю
@@ -414,8 +429,9 @@ class Mesh:
             point.set_up(up)
         # точка справа
         if point.right is None:
+            # если соседняя точка лежит вне области
             if not self.geom.contains(asPoint([x + self.dx, y])):
-                # перессекаем boundary для получения точки
+                # перессекаем boundary с горизонтальной прямой
                 xyz = np.array(self.geom.boundary.intersection(
                         asLineString([[x, y], [self.max_x, y]])))
                 # если xyz содержит несколько точек, берём ближнюю
@@ -429,8 +445,9 @@ class Mesh:
             point.set_right(right)
         # точка снизу
         if point.down is None:
+            # если соседняя точка лежит вне области
             if not self.geom.contains(asPoint([x, y - self.dy])):
-                # перессекаем boundary для получения точки
+                # перессекаем boundary с вертикальной прямой
                 xyz = np.array(self.geom.boundary.intersection(
                         asLineString([[x, self.min_y], [x, y]])))
                 # если xyz содержит несколько точек, берём ближнюю
@@ -444,8 +461,9 @@ class Mesh:
             point.set_down(down)
         # точка слева
         if point.left is None:
+            # если соседняя точка лежит вне области
             if not self.geom.contains(asPoint([x - self.dx, y])):
-                # перессекаем boundary для получения точки
+                # перессекаем boundary с горизонтальной прямой
                 xyz = np.array(self.geom.boundary.intersection(
                         asLineString([[self.min_x, y], [x, y]])))
                 # если xyz содержит несколько точек, берём ближнюю
@@ -460,10 +478,17 @@ class Mesh:
         return point
 
     def init_triangles(self, mp=None, made=[]):
+        """
+        Рекурсивная функция для инициализации треугольников по вершинам меша
+        :param mp: текущая точка
+        :param made: индексы учтённых точек
+        """
         if mp is None:
             mp = self.points[0]
+        # если точка уже учтена
         if mp.index in made:
             return
+        # получение треугольников для точки
         for tr in mp.triangles():
             self.triangles.append(tr)
         made.append(mp.index)
@@ -493,11 +518,14 @@ class Mesh:
         v2 = self.points[mps[2]].data - self.points[mps[0]].data
         # векторное произведение
         cross = np.cross(v1, v2)
-        # площадь - половина длины векторного произведения
-        return np.sqrt(cross.dot(cross)) / 2.
+        # площадь = половина длины векторного произведения
+        return np.sqrt(cross.dot(cross)) / 2
 
     def count_area(self):
-        self.area = sum(list(map(self.triangle_area, self.triangles)))
+        # self.area = sum(list(map(self.triangle_area, self.triangles)))
+        self.area = 0
+        for mps in self.triangles:
+            self.area += self.triangle_area(mps)
 
 
 def catmul_rom3(s, p0, p1, p2, tau=0.5):

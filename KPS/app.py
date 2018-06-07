@@ -73,13 +73,13 @@ class App(pyglet.window.Window):
             self.boundary.clear()
             self.container3D.clear()
         elif symbol == key.A:
-            self.container3D.move_eye(-180, 0)
+            self.container3D.rotate(-180, 0)
         elif symbol == key.W:
-            self.container3D.move_eye(0, 180)
+            self.container3D.rotate(0, 180)
         elif symbol == key.D:
-            self.container3D.move_eye(180, 0)
+            self.container3D.rotate(180, 0)
         elif symbol == key.S:
-            self.container3D.move_eye(0, -180)
+            self.container3D.rotate(0, -180)
         elif symbol == key.Q:
             self.container3D.clear()
         elif symbol == key.P:
@@ -104,7 +104,7 @@ class App(pyglet.window.Window):
                 x, y = self.container2D.recount_xy(x, y)
                 self.boundary.mouse_drag(x, y, dx, dy)
             if self.container3D.isin(x, y):
-                self.container3D.move_eye(dx, dy)
+                self.container3D.rotate(dx, dy)
 
     def on_resize(self, width, height):
         self.width = height * 2 - Container.margin

@@ -60,6 +60,7 @@ class Container(glooey.Frame):
 
     def draw(self, boundary):
         glViewport(self.left_v, self.bottom_v, self.width_v, self.height_v)
+        # фон контейнера
         gr.draw(4, GL_POLYGON,
                 ('v3f', (-1, -1, .99, -1, 1, .99, 1, 1, .99, 1, -1, .99)),
                 ('c4f', (0., 0., 0.4, 1) * 4))
@@ -150,17 +151,20 @@ class Container3D(Container):
     left_w = property(lambda self:
                       int(0.5 * self.margin) + self.window_size[0] // 2)
 
-    def move_eye(self, dx, dy):
+    def rotate(self, dx, dy):
+        """
+        Функция для обработки вращения от движения мыши
+        :param dx: изменение положения мыши по горизонтали
+        :param dy: изменение положения мыши по вертикали
+        """
         if dx == dy == 0:
             return
-        # вектор поворота
+        # вектор движения мыши
         rotation = np.array([dx, dy, 0])
         # векторное произведение - вектор, вокруг которого вращается
         cross = np.cross([0., 0., 1.], rotation)
-        # кватернион вращения
-        q = Quaternion(axis=cross, degrees=np.sqrt(rotation.dot(rotation)))
-        # print(rotation, q.axis, q.degrees, end='\n\n')
-        self.q *= q
+        # добавляем кватернион вращения
+        self.q *= Quaternion(axis=cross, degrees=np.sqrt(rotation.dot(rotation)))
         self.rotated = True
 
     def transform(self, points):
@@ -193,19 +197,20 @@ class Container3D(Container):
         if boundary.changed or self.rotated:
             self.recount_saved(boundary)
 
-        # draw points
+        # рисование точек
         gr.draw(len(self.ps) // 3,
                 GL_POINTS,
                 ('v3f', self.ps),
                 ('c4f', self.pcs))
 
-        # draw lines
+        # рисование линий
         for i in range(len(self.ls)):
             gr.draw(len(self.ls[i]) // 3,
                     GL_LINE_LOOP,
                     ('v3f', self.ls[i]),
                     ('c4f', self.lcs[i]))
 
+        # со светом только полигоны
         glEnable(GL_LIGHTING)
         glEnable(GL_LIGHT0)
         glLightfv(GL_LIGHT0, GL_POSITION, (GLfloat * 4)(0, 0, 1, 1))
@@ -213,7 +218,7 @@ class Container3D(Container):
         glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.6)
         glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.7)
 
-        # draw polygons
+        # рисование полигонов
         for i in range(len(self.pols)):
             gr.draw(len(self.pols[i]) // 3,
                     GL_POLYGON,
